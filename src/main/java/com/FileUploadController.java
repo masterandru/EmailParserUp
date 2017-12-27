@@ -1,7 +1,7 @@
-package hello;
+package com;
 
-import hello.storage.StorageFileNotFoundException;
-import hello.storage.StorageService;
+import com.storage.StorageFileNotFoundException;
+import com.storage.StorageService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,24 +43,47 @@ public class FileUploadController {
 
     @GetMapping("/")
     public String listUploadedFiles(Model model) throws IOException {
-        //logger.info("Call listUploadedFiles ");
-        model.addAttribute("files", storageService.loadAll().map(
-                path -> MvcUriComponentsBuilder.fromMethodName(FileUploadController.class,
-                        "serveFile", path.getFileName().toString()).build().toString())
-                .collect(Collectors.toList()));
+        logger.info("Call listUploadedFiles BEGIN");
 
+        try {
+            logger.info("---" + storageService.loadAll().collect(Collectors.toList()).toString());
+            model.addAttribute("files", storageService.loadAll().map(
+                    path -> MvcUriComponentsBuilder.fromMethodName(FileUploadController.class,
+                            "serveFile", path.getFileName().toString()).build().toString())
+                    .collect(Collectors.toList()));
+        } catch (Exception e) {
+            //logger.trace("Exception listUploadedFiles " + e);
+            //logger.info("Exception listUploadedFiles " + e);
+            logger.error("Exception listUploadedFiles " + e);
+
+            // отправка почты
+            //MailSender mailSender = new MailSender();
+            //mailSender.sendMail("andruschenco@gmail.com",
+            //        "andruschenco@gmail.com", "JavaMailSender", "Error: " + e);
+        }
+
+        logger.info("Call listUploadedFiles END");
         return "uploadForm";
+
     }
 
     @GetMapping("/files/{filename:.+}")
     @ResponseBody
     public ResponseEntity<Resource> serveFile(@PathVariable String filename) {
-        //logger.info("Call serveFile ");
+        logger.info("Call serveFile ");
         Resource file = storageService.loadAsResource(filename);
 
         return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION,
                 "attachment; filename=\"" + file.getFilename() + "\"").body(file);
     }
+
+    @PostMapping("/clear")
+    public String handleClearFiles(Model model) {
+        logger.info("Call handleClearFiles ");
+        storageService.deleteAll();
+        return "redirect:/";
+    }
+
 
     @PostMapping("/")
     public String handleFileUpload(@RequestParam("file") MultipartFile file, RedirectAttributes redirectAttributes) {
@@ -88,8 +111,8 @@ public class FileUploadController {
 
                 gmailAndOtherEmails.get(true).stream()
                         .forEach((x) -> {
-                                    logger.info(x + ", ");
-                            emailsList.append(x + ", ");
+                                    //logger.info(x + ", ");
+                                    emailsList.append(x + ", ");
                                     //outGmail.println(x);
                                 }
                         );
@@ -97,8 +120,8 @@ public class FileUploadController {
 
                 gmailAndOtherEmails.get(false).stream()
                         .forEach((x) -> {
-                                    logger.info(x + ", ");
-                            emailsList.append(x + ", ");
+                                    //logger.info(x + ", ");
+                                    emailsList.append(x + ", ");
                                     //outMail.println(x);
                                 }
                         );

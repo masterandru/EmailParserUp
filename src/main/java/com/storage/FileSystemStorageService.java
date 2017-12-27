@@ -1,4 +1,4 @@
-package hello.storage;
+package com.storage;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -66,6 +66,10 @@ public class FileSystemStorageService implements StorageService {
     @Override
     public Stream<Path> loadAll() {
         try {
+            if (Files.notExists(rootLocation)) {
+                Files.createDirectories(rootLocation);
+            }
+
             return Files.walk(this.rootLocation, 1)
                     .filter(path -> !path.equals(this.rootLocation))
                     .map(path -> this.rootLocation.relativize(path));

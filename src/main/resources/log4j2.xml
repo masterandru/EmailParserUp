@@ -7,59 +7,61 @@
                 <Pattern>%d %p %c{1.} [%t] %m%n</Pattern>
             </PatternLayout>
             <Policies>
-                <TimeBasedTriggeringPolicy />
+                <TimeBasedTriggeringPolicy/>
                 <SizeBasedTriggeringPolicy size="5MB"/>
             </Policies>
         </RollingFile>
     </Appenders>
     <Loggers>
-        <Root level="info">
+        <!--<Root level="info">-->
+        <!--<Root level="trace">-->
+        <Root level="error">
             <AppenderRef ref="RollingFile"/>
         </Root>
     </Loggers>
 </Configuration>
 
 
-<!--
-<?xml version="1.0" encoding="UTF-8"?>
-<Configuration status="warn" name="MyApp" packages="" >
-    <Appenders>
-        <File name="MyFile" fileName="E://Test//logfile.log">
-            <PatternLayout>
-                <Pattern>%d %p %c{1.} [%t] %m%n</Pattern>
-            </PatternLayout>
-        </File>
-    </Appenders>
-    <Loggers>
-        <Root level="error">
-            <AppenderRef ref="MyFile"/>
-        </Root>
-    </Loggers>
-</Configuration>
--->
+        <!--
+        <?xml version="1.0" encoding="UTF-8"?>
+        <Configuration status="warn" name="MyApp" packages="" >
+            <Appenders>
+                <File name="MyFile" fileName="E://Test//logfile.log">
+                    <PatternLayout>
+                        <Pattern>%d %p %c{1.} [%t] %m%n</Pattern>
+                    </PatternLayout>
+                </File>
+            </Appenders>
+            <Loggers>
+                <Root level="error">
+                    <AppenderRef ref="MyFile"/>
+                </Root>
+            </Loggers>
+        </Configuration>
+        -->
 
-<!--
-<?xml version="1.0" encoding="UTF-8"?>
-<Configuration xmlns="http://logging.apache.org/log4j/2.0/config">
+        <!--
+        <?xml version="1.0" encoding="UTF-8"?>
+        <Configuration xmlns="http://logging.apache.org/log4j/2.0/config">
 
-    <Appenders>
-        <File name="FILE" fileName="E://Test//logfile.log" append="true">
-            <PatternLayout pattern="%-5p | %d{yyyy-MM-dd HH:mm:ss} | [%t] %C{2} (%F:%L) - %m%n"/>
-        </File>
+            <Appenders>
+                <File name="FILE" fileName="E://Test//logfile.log" append="true">
+                    <PatternLayout pattern="%-5p | %d{yyyy-MM-dd HH:mm:ss} | [%t] %C{2} (%F:%L) - %m%n"/>
+                </File>
 
-        <Console name="STDOUT" target="SYSTEM_OUT">
-            <PatternLayout pattern="%-5p | %d{yyyy-MM-dd HH:mm:ss} | [%t] %C{2} (%F:%L) - %m%n"/>
-        </Console>
-    </Appenders>
+                <Console name="STDOUT" target="SYSTEM_OUT">
+                    <PatternLayout pattern="%-5p | %d{yyyy-MM-dd HH:mm:ss} | [%t] %C{2} (%F:%L) - %m%n"/>
+                </Console>
+            </Appenders>
 
-    <Loggers>
-        <Logger name="com.memorynotfound" level="debug"/>
+            <Loggers>
+                <Logger name="com.memorynotfound" level="debug"/>
 
-        <Root level="info">
-            <AppenderRef ref="STDOUT"/>
-            <AppenderRef ref="FILE"/>
-        </Root>
-    </Loggers>
+                <Root level="info">
+                    <AppenderRef ref="STDOUT"/>
+                    <AppenderRef ref="FILE"/>
+                </Root>
+            </Loggers>
 
-</Configuration>
--->
+        </Configuration>
+        -->

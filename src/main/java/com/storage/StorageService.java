@@ -1,4 +1,4 @@
-package hello.storage;
+package com.storage;
 
 import org.springframework.core.io.Resource;
 

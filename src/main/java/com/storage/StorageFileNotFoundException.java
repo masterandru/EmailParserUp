@@ -1,4 +1,4 @@
-package hello.storage;
+package com.storage;
 
 public class StorageFileNotFoundException extends StorageException {
 
