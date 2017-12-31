@@ -2,6 +2,9 @@ package com;
 
 import com.storage.StorageFileNotFoundException;
 import com.storage.StorageService;
+import com.utils.EmailExtractor;
+import com.utils.EmailFormatter;
+import com.utils.EmailSeparator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,24 +18,25 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Controller
 public class FileUploadController {
 
     private final StorageService storageService;
+
+    @Autowired
+    private EmailExtractor emailExtractor;
+    @Autowired
+    private EmailSeparator emailSeparator;
+    @Autowired
+    private EmailFormatter emailFormatter;
 
     private Logger logger = LogManager.getLogger(FileUploadController.class);
 
@@ -41,6 +45,17 @@ public class FileUploadController {
         this.storageService = storageService;
     }
 
+    /*
+        @Autowired
+        public void wireEmailExtractor(EmailExtractor emailExtractor) {
+            this.emailExtractor = emailExtractor;       }
+
+        /*
+         @Autowired
+          public void wireEmailSeparator(EmailSeparator emailSeparator) {
+              this.emailSeparator = emailSeparator;
+          }
+      */
     @GetMapping("/")
     public String listUploadedFiles(Model model) throws IOException {
         logger.info("Call listUploadedFiles BEGIN");
@@ -88,53 +103,48 @@ public class FileUploadController {
     @PostMapping("/")
     public String handleFileUpload(@RequestParam("file") MultipartFile file, RedirectAttributes redirectAttributes) {
         try {
-            logger.info("Call handleFileUpload "); ///  -- загрузка файлов
-            logger.info(" - " + file.getClass().getName()); ///  -- загрузка файлов
+            logger.trace("Call handleFileUpload "); ///  -- загрузка файлов
+            //logger.info(" - " + file.getClass().getName()); ///  -- загрузка файлов
 
-            try (BufferedReader br = new BufferedReader(new InputStreamReader(file.getInputStream(), Charset.forName(StandardCharsets.UTF_8.name())))) {
-                Pattern pattern = Pattern.compile("\\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,4}\\b", Pattern.CASE_INSENSITIVE);
-                Set<String> emails = new HashSet<>();
-                br.lines().forEach(
-                        line -> {
-                            //logger.info("2 - " + line);
-                            Matcher matcher = pattern.matcher(line);
-                            while (matcher.find()) {
-                                emails.add(matcher.group());
+            // Фильрация email адресов (извлекаем из файла)
+            Set<String> emails = emailExtractor.getEmails(file.getInputStream());
+
+            // Делим адреса на две группы  1-я группа адрес на gmail.com 2-я группа все остальные
+            Map<Boolean, List<String>> gmailAndOtherEmails = emailSeparator.getDividedEmails(emails);
+
+            String textEmailsList = emailFormatter.getFormattedEmails(gmailAndOtherEmails);
+            logger.info("handleFileUpload " + textEmailsList);
+/*
+            StringBuilder emailsList = new StringBuilder();
+
+            gmailAndOtherEmails.get(true)
+                    .forEach((emailAddress) -> {                        // .forEach неявно  пеобразует в stream().forEach
+                                logger.trace(emailAddress + ", ");
+                                emailsList.append(emailAddress + ", ");
                             }
-                        }
-                );
+                    );
+            logger.info("GMail EmailsList: Count:" + gmailAndOtherEmails.get(true).stream().count());
 
-                // Делим адреса на две части
-                Map<Boolean, List<String>> gmailAndOtherEmails = emails.stream().sorted().collect(Collectors.partitioningBy((s) -> s.contains("@gmail.com")));
+            gmailAndOtherEmails.get(false)
+                    .forEach((emailAddress) -> {
+                                logger.trace(emailAddress + ", ");
+                                emailsList.append(emailAddress + ", ");
+                            }
+                    );
+            logger.info("\nOther EmailsList: Count:" + gmailAndOtherEmails.get(false).stream().count());
+            //gmailAndOtherEmails.get(true).stream().toArray();
+            //gmailAndOtherEmails.get(false).stream().map(i -> i + ",").collect();
+*/
 
-                StringBuilder emailsList = new StringBuilder();
+            ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(textEmailsList.getBytes(Charset.forName("UTF-8")));
+            logger.info("handleFileUpload " + byteArrayInputStream); ///  -- загрузка файлов
 
-                gmailAndOtherEmails.get(true).stream()
-                        .forEach((x) -> {
-                                    //logger.info(x + ", ");
-                                    emailsList.append(x + ", ");
-                                    //outGmail.println(x);
-                                }
-                        );
-                logger.info("GMail EmailsList: Count:" + gmailAndOtherEmails.get(true).stream().count());
+            //ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(emails.toString().getBytes(Charset.forName("UTF-8")));
+            //logger.info("handleFileUpload " + emails.toString().getBytes(Charset.forName("UTF-8"))); ///  -- загрузка файлов
 
-                gmailAndOtherEmails.get(false).stream()
-                        .forEach((x) -> {
-                                    //logger.info(x + ", ");
-                                    emailsList.append(x + ", ");
-                                    //outMail.println(x);
-                                }
-                        );
-                logger.info("\nOther EmailsList: Count:" + gmailAndOtherEmails.get(false).stream().count());
-                //gmailAndOtherEmails.get(true).stream().toArray();
-                //gmailAndOtherEmails.get(false).stream().map(i -> i + ",").collect();
 
-                ByteArrayInputStream byteArrayInputStream = new
-                        ByteArrayInputStream(emails.toString().getBytes(Charset.forName("UTF-8")));
-                logger.info("handleFileUpload " + emails.toString().getBytes(Charset.forName("UTF-8"))); ///  -- загрузка файлов
-
-                //logger.info("handleFileUpload " + file.getInputStream().getClass().getName()); ///  -- загрузка файлов
-                storageService.store(byteArrayInputStream, file.getOriginalFilename());
+            //logger.info("handleFileUpload " + file.getInputStream().getClass().getName()); ///  -- загрузка файлов
+            storageService.store(byteArrayInputStream, file.getOriginalFilename());
 
 
                 /*
@@ -150,13 +160,15 @@ public class FileUploadController {
                 mailSender.sendMail(from, to, subject, body);
                 */
 
-            } catch (IOException pe) {
-                pe.printStackTrace();
-            }
-        } catch (Exception e) {
-            logger.info("ANY Exception in handleFileUpload " + e.getStackTrace()); ///  -- загрузка файлов
-        }
+        } catch (IOException pe) {
 
+            logger.error("IOException in handleFileUpload " + pe.getStackTrace()); ///  -- загрузка файлов
+        }
+           /*
+        } catch (Exception e) {
+            logger.error("ANY Exception in handleFileUpload " + e.getStackTrace()); ///  -- загрузка файлов
+        }
+*/
 
 
 /*
@@ -181,7 +193,7 @@ public class FileUploadController {
 //        }
 
         //storageService.store(file);
-        redirectAttributes.addFlashAttribute("message", "You successfully uploaded " + file.getOriginalFilename() + "!");
+        redirectAttributes.addFlashAttribute("message", "Файл " + file.getOriginalFilename() + " загружен !");
 
         return "redirect:/";
     }

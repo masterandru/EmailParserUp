@@ -14,8 +14,8 @@
     </Appenders>
     <Loggers>
         <!--<Root level="info">-->
-        <!--<Root level="trace">-->
-        <Root level="error">
+        <Root level="trace">
+        <!--<Root level="error">-->
             <AppenderRef ref="RollingFile"/>
         </Root>
     </Loggers>

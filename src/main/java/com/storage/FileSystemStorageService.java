@@ -1,5 +1,7 @@
 package com.storage;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -15,10 +17,12 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.stream.Stream;
 
+
 @Service
 public class FileSystemStorageService implements StorageService {
 
     private final Path rootLocation;
+    private Logger logger = LogManager.getLogger(FileSystemStorageService.class);
 
     @Autowired
     public FileSystemStorageService(StorageProperties properties) {
@@ -52,12 +56,15 @@ public class FileSystemStorageService implements StorageService {
             /*if (inputStream.isEmpty()){
                 throw new StorageException("Failed to store empty file " + filename);
             }*/
+
+            //TODO: Сделать нормальзацию имени файла
             if (filename.contains("..")) {
                 // This is a security check
                 throw new StorageException("Cannot store file with relative path outside current directory " + filename);
             }
-            Files.copy(inputStream, this.rootLocation.resolve(filename),
-                    StandardCopyOption.REPLACE_EXISTING);
+            Files.copy(inputStream, this.rootLocation.resolve(filename), StandardCopyOption.REPLACE_EXISTING);
+            //logger.trace("Call store this.rootLocation.resolve(filename)-> "+this.rootLocation.resolve(filename));
+
         } catch (IOException e) {
             throw new StorageException("Failed to store file " + filename, e);
         }
@@ -66,9 +73,10 @@ public class FileSystemStorageService implements StorageService {
     @Override
     public Stream<Path> loadAll() {
         try {
-            if (Files.notExists(rootLocation)) {
-                Files.createDirectories(rootLocation);
-            }
+            //TODO: Нужна ли тут проверка если директория пересоздаётся после удаления и при старте приложения
+            //if (Files.notExists(rootLocation)) {
+            //    Files.createDirectories(rootLocation);
+            //}
 
             return Files.walk(this.rootLocation, 1)
                     .filter(path -> !path.equals(this.rootLocation))
@@ -102,6 +110,8 @@ public class FileSystemStorageService implements StorageService {
     @Override
     public void deleteAll() {
         FileSystemUtils.deleteRecursively(rootLocation.toFile());
+        logger.trace("Call deleteAll rootLocation.toFile()-> " + rootLocation.toFile());
+        init(); // Create dir //TODO: Сделать красивую очистку директории без удаления и создания
     }
 
     @Override
